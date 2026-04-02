@@ -116,19 +116,12 @@ body {
 
 .vertical-slider {
     -webkit-appearance: slider-vertical;
-    appearance: slider-vertical;
+    appearance: auto;
+    writing-mode: vertical-lr;
+    direction: rtl;
     width: 2.5rem;
     height: 16rem;
     margin: 0;
-}
-
-@supports not (appearance: slider-vertical) {
-    .vertical-slider {
-        appearance: auto;
-        width: 16rem;
-        height: 2.5rem;
-        transform: rotate(-90deg);
-    }
 }
 
 @media (max-width: 640px) {
