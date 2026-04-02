@@ -105,5 +105,8 @@ dist
 # TernJS port file
 .tern-port
 
-# Ignore exported files
+# Ignore exported files by default, but keep the published RNBO web assets
 export/*.json
+!export/*.export.json
+!export/dependencies.json
+!export/export-manifest.json
