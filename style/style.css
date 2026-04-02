@@ -45,8 +45,11 @@ body {
     display: flex;
     justify-content: flex-end;
     align-items: center;
+    gap: 0.45rem;
+    flex-wrap: wrap;
 }
 
+#midi-panel,
 #preset-panel {
     display: inline-flex;
     align-items: center;
@@ -65,6 +68,15 @@ body {
     text-transform: uppercase;
 }
 
+#midi-label,
+#preset-label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+#midi-input-select,
 #preset-select {
     min-width: 9rem;
     max-width: 14rem;
@@ -248,6 +260,7 @@ body {
         gap: 0.6rem;
     }
 
+    #midi-input-select,
     #preset-select {
         min-width: 7.5rem;
     }

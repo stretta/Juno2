@@ -1,21 +1,22 @@
 const PARAM_LABEL_OVERRIDES = {
+    Res: "Res",
     FilterOffset: "Filter Offset",
     FilterLFORate: "LFO Rate",
     FilterLFOAmt: "LFO Amount",
     FilterEnvAttack: "F Env Attack",
     FilterEnvDecay: "F Env Decay",
     FilterEnvSustain: "F Env Sustain",
-    FilterEnvAttackRelease: "F Env Release",
+    FilterEnvRelease: "F Env Release",
     FilterEnvAmt: "F Env Amount",
     SawLevel: "Saw",
     PulseLevel: "Pulse",
     SubLevel: "Sub",
     NoiseLevel: "Noise",
     PW: "Pulse Width",
-    attack: "Attack",
-    decay: "Decay",
-    sustain: "Sustain",
-    release: "Release"
+    VCAEnvAttack: "Attack",
+    VCAEnvDecay: "Decay",
+    VCAEnvSustain: "Sustain",
+    VCAEnvRelease: "Release"
 };
 
 const CONTROL_GROUPS = [
@@ -25,17 +26,20 @@ const CONTROL_GROUPS = [
     },
     {
         title: "Filter",
-        controls: ["FilterOffset", "Resonance", "FilterLFORate", "FilterLFOAmt", "FilterEnvAmt"]
+        controls: ["FilterOffset", "Res", "FilterLFORate", "FilterLFOAmt", "FilterEnvAmt"]
     },
     {
         title: "Filter Env",
-        controls: ["FilterEnvAttack", "FilterEnvDecay", "FilterEnvSustain", "FilterEnvAttackRelease"]
+        controls: ["FilterEnvAttack", "FilterEnvDecay", "FilterEnvSustain", "FilterEnvRelease"]
     },
     {
         title: "VCA Env",
-        controls: ["attack", "decay", "sustain", "release"]
+        controls: ["VCAEnvAttack", "VCAEnvDecay", "VCAEnvSustain", "VCAEnvRelease"]
     }
 ];
+
+let midiAccess = null;
+let connectedMidiInput = null;
 
 window.addEventListener("rnbo-ready", (event) => {
     const { device, patcher } = event.detail;
@@ -47,6 +51,7 @@ window.addEventListener("rnbo-ready", (event) => {
 
     mountControls(device);
     mountPresetMenu(device, patcher);
+    mountWebMIDI(device);
     mountKeyboard(device);
 });
 
@@ -208,7 +213,95 @@ function mountPresetMenu(device, patcher) {
         }
     });
 
+    presetSelect.value = "0";
     presetPanel.hidden = false;
+}
+
+async function mountWebMIDI(device) {
+    const midiPanel = document.getElementById("midi-panel");
+    const midiInputSelect = document.getElementById("midi-input-select");
+
+    if (!midiPanel || !midiInputSelect || device.numMIDIInputPorts < 1) {
+        return;
+    }
+
+    if (!navigator.requestMIDIAccess) {
+        midiPanel.hidden = true;
+        return;
+    }
+
+    try {
+        midiAccess = await navigator.requestMIDIAccess({ sysex: false });
+    } catch (err) {
+        console.warn("Web MIDI unavailable", err);
+        midiPanel.hidden = true;
+        return;
+    }
+
+    const refreshMidiInputs = () => {
+        const inputs = Array.from(midiAccess.inputs.values());
+        midiInputSelect.innerHTML = "";
+
+        if (inputs.length < 1) {
+            disconnectMidiInput();
+            midiPanel.hidden = true;
+            return;
+        }
+
+        inputs.forEach((input) => {
+            const option = document.createElement("option");
+            option.value = input.id;
+            option.textContent = input.name || input.manufacturer || input.id;
+            midiInputSelect.appendChild(option);
+        });
+
+        const defaultInputId = connectedMidiInput && inputs.some((input) => input.id === connectedMidiInput.id)
+            ? connectedMidiInput.id
+            : inputs[0].id;
+
+        midiInputSelect.value = defaultInputId;
+        connectMidiInput(device, midiAccess.inputs.get(defaultInputId));
+        midiPanel.hidden = false;
+    };
+
+    midiInputSelect.onchange = () => {
+        connectMidiInput(device, midiAccess.inputs.get(midiInputSelect.value));
+    };
+
+    midiAccess.onstatechange = refreshMidiInputs;
+    refreshMidiInputs();
+}
+
+function connectMidiInput(device, input) {
+    if (!input) {
+        disconnectMidiInput();
+        return;
+    }
+
+    if (connectedMidiInput && connectedMidiInput.id === input.id) {
+        return;
+    }
+
+    disconnectMidiInput();
+    connectedMidiInput = input;
+    connectedMidiInput.onmidimessage = (event) => {
+        if (!event.data || event.data.length < 1) {
+            return;
+        }
+
+        const payload = Array.from(event.data);
+        const midiEvent = new RNBO.MIDIEvent(device.context.currentTime * 1000, 0, payload);
+        device.scheduleEvent(midiEvent);
+    };
+}
+
+function disconnectMidiInput() {
+    if (!connectedMidiInput) {
+        return;
+    }
+
+    connectedMidiInput.onmidimessage = null;
+    connectedMidiInput = null;
 }
 
 function mountKeyboard(device) {
