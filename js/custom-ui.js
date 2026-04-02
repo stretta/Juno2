@@ -1,3 +1,42 @@
+const PARAM_LABEL_OVERRIDES = {
+    FilterOffset: "Filter Offset",
+    FilterLFORate: "LFO Rate",
+    FilterLFOAmt: "LFO Amount",
+    FilterEnvAttack: "F Env Attack",
+    FilterEnvDecay: "F Env Decay",
+    FilterEnvSustain: "F Env Sustain",
+    FilterEnvAttackRelease: "F Env Release",
+    FilterEnvAmt: "F Env Amount",
+    SawLevel: "Saw",
+    PulseLevel: "Pulse",
+    SubLevel: "Sub",
+    NoiseLevel: "Noise",
+    PW: "Pulse Width",
+    attack: "Attack",
+    decay: "Decay",
+    sustain: "Sustain",
+    release: "Release"
+};
+
+const CONTROL_GROUPS = [
+    {
+        title: "Osc",
+        controls: ["SawLevel", "PulseLevel", "PW", "SubLevel", "NoiseLevel"]
+    },
+    {
+        title: "Filter",
+        controls: ["FilterOffset", "Resonance", "FilterLFORate", "FilterLFOAmt", "FilterEnvAmt"]
+    },
+    {
+        title: "Filter Env",
+        controls: ["FilterEnvAttack", "FilterEnvDecay", "FilterEnvSustain", "FilterEnvAttackRelease"]
+    },
+    {
+        title: "VCA Env",
+        controls: ["attack", "decay", "sustain", "release"]
+    }
+];
+
 window.addEventListener("rnbo-ready", (event) => {
     const { device, patcher } = event.detail;
 
@@ -7,6 +46,7 @@ window.addEventListener("rnbo-ready", (event) => {
     });
 
     mountControls(device);
+    mountPresetMenu(device, patcher);
     mountKeyboard(device);
 });
 
@@ -18,31 +58,37 @@ function mountControls(device) {
 
     container.innerHTML = "";
 
-    const controlConfig = [
-        { id: "FilterOffset", label: "Filter Offset" },
-        { id: "Resonance", label: "Resonance" },
-        { id: "attack", label: "Attack" },
-        { id: "decay", label: "Decay" },
-        { id: "sustain", label: "Sustain" },
-        { id: "release", label: "Release" },
-        { id: "FilterLFORate", label: "LFO Rate" },
-        { id: "FilterLFOAmt", label: "LFO Amount" }
-    ];
+    const parameterMap = new Map(device.parameters.map((param) => [param.id, param]));
 
-    const controlParams = controlConfig
-        .map(({ id, label }) => {
-            const param = device.parameters.find((entry) => entry.id === id);
+    CONTROL_GROUPS.forEach((group) => {
+        const groupElement = createControlGroup(group.title);
+
+        group.controls.forEach((id) => {
+            const param = parameterMap.get(id);
             if (!param) {
-                return null;
+                return;
             }
 
-            return { param, label };
-        })
-        .filter(Boolean);
+            const label = PARAM_LABEL_OVERRIDES[param.id] || param.name;
+            groupElement.querySelector(".control-group-grid").appendChild(createVerticalSlider(param, label));
+        });
 
-    controlParams.forEach(({ param, label }) => {
-        container.appendChild(createVerticalSlider(param, label));
+        const hasControls = groupElement.querySelector(".control-group-grid").children.length > 0;
+        if (hasControls) {
+            container.appendChild(groupElement);
+        }
     });
+
+    const usedParamIds = new Set(CONTROL_GROUPS.flatMap((group) => group.controls));
+    const remainingParams = device.parameters.filter((param) => !usedParamIds.has(param.id));
+    if (remainingParams.length > 0) {
+        const extrasGroup = createControlGroup("More");
+        remainingParams.forEach((param) => {
+            const label = PARAM_LABEL_OVERRIDES[param.id] || param.name;
+            extrasGroup.querySelector(".control-group-grid").appendChild(createVerticalSlider(param, label));
+        });
+        container.appendChild(extrasGroup);
+    }
 
     device.parameterChangeEvent.subscribe((param) => {
         const slider = document.querySelector(`[data-param-slider="${param.id}"]`);
@@ -56,6 +102,23 @@ function mountControls(device) {
             readout.textContent = formatValue(param);
         }
     });
+}
+
+function createControlGroup(title) {
+    const section = document.createElement("section");
+    const heading = document.createElement("h2");
+    const grid = document.createElement("div");
+
+    section.className = "control-group";
+    section.dataset.group = title.toLowerCase().replace(/\s+/g, "-");
+    heading.className = "control-group-title";
+    heading.textContent = title;
+    grid.className = "control-group-grid";
+
+    section.appendChild(heading);
+    section.appendChild(grid);
+
+    return section;
 }
 
 function createVerticalSlider(param, labelText) {
@@ -107,8 +170,45 @@ function getStep(param) {
 
 function formatValue(param) {
     const value = Number(param.value);
+    if (param.steps === 2) {
+        return `${Math.round(value)}`;
+    }
+
     const formatted = value.toFixed(2).replace(/\.00$/, "");
     return param.unit ? `${formatted} ${param.unit}` : formatted;
+}
+
+function mountPresetMenu(device, patcher) {
+    const presetPanel = document.getElementById("preset-panel");
+    const presetSelect = document.getElementById("preset-select");
+
+    if (!presetPanel || !presetSelect) {
+        return;
+    }
+
+    const presets = patcher.presets || [];
+    presetSelect.innerHTML = "";
+
+    if (presets.length < 1) {
+        presetPanel.hidden = true;
+        return;
+    }
+
+    presets.forEach((preset, index) => {
+        const option = document.createElement("option");
+        option.value = String(index);
+        option.textContent = preset.name || `Preset ${index + 1}`;
+        presetSelect.appendChild(option);
+    });
+
+    presetSelect.addEventListener("change", () => {
+        const selectedPreset = presets[Number(presetSelect.value)];
+        if (selectedPreset) {
+            device.setPreset(selectedPreset.preset);
+        }
+    });
+
+    presetPanel.hidden = false;
 }
 
 function mountKeyboard(device) {

@@ -5,16 +5,18 @@ html, body {
 }
 
 body {
-    font-family: "Avenir Next", "Segoe UI", sans-serif;
-    background: linear-gradient(180deg, #f2efe8 0%, #ddd5c5 100%);
-    color: #1b1a18;
+    font-family: "Avenir Next Condensed", "Arial Narrow", "Segoe UI", sans-serif;
+    background:
+        linear-gradient(180deg, rgba(0, 0, 0, 0.16), rgba(0, 0, 0, 0.3)),
+        linear-gradient(180deg, #4c565f 0%, #252b30 100%);
+    color: #111;
 }
 
 #rnbo-root {
     min-height: 100vh;
     display: grid;
     place-items: center;
-    padding: 2rem;
+    padding: 1rem;
     box-sizing: border-box;
 }
 
@@ -23,22 +25,126 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 2rem;
-    width: min(56rem, 100%);
-    min-height: 32rem;
-    padding: 2rem;
-    border-radius: 1.5rem;
-    background: rgba(255, 252, 246, 0.88);
-    box-shadow: 0 1.25rem 3rem rgba(50, 37, 14, 0.18);
+    gap: 1.25rem;
+    width: min(72rem, 100%);
+    min-height: 24rem;
+    padding: 1rem 1rem 1.15rem;
+    border-radius: 0.9rem;
+    border: 1px solid rgba(70, 53, 28, 0.25);
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0) 8%),
+        linear-gradient(180deg, #d7cfb8 0%, #c8bea4 100%);
+    box-shadow:
+        0 1.25rem 3rem rgba(0, 0, 0, 0.28),
+        inset 0 0.1rem 0 rgba(255, 255, 255, 0.72),
+        inset 0 -0.12rem 0 rgba(80, 61, 32, 0.2);
+}
+
+#panel-toolbar {
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+#preset-panel {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.3rem 0.45rem;
+    border: 1px solid rgba(85, 68, 41, 0.28);
+    border-radius: 0.45rem;
+    background: rgba(248, 243, 230, 0.9);
+    box-shadow: inset 0 0.05rem 0 rgba(255, 255, 255, 0.7);
+}
+
+#preset-label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+#preset-select {
+    min-width: 9rem;
+    max-width: 14rem;
+    padding: 0.2rem 1.6rem 0.2rem 0.45rem;
+    border: 1px solid rgba(70, 53, 28, 0.3);
+    border-radius: 0.35rem;
+    background: #f9f6ee;
+    color: #1e1a14;
+    font: inherit;
+    font-size: 0.72rem;
 }
 
 #rnbo-parameter-sliders {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.85rem;
+    width: 100%;
+}
+
+.control-group {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 0.6rem;
+    padding: 0.8rem 0.55rem 0.75rem;
+    border: 1px solid rgba(85, 68, 41, 0.28);
+    border-radius: 0.5rem;
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.2), transparent 18%),
+        linear-gradient(180deg, #e7dfca 0%, #dbd0b5 100%);
+    box-shadow:
+        inset 0 0.06rem 0 rgba(255, 255, 255, 0.75),
+        inset 0 -0.08rem 0 rgba(92, 74, 44, 0.14);
+}
+
+.control-group::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 0.28rem;
+    border-radius: 0.45rem 0.45rem 0 0;
+    background: #111;
+}
+
+.control-group[data-group="osc"]::before {
+    background: #9a2e2b;
+}
+
+.control-group[data-group="filter"]::before {
+    background: #3767a0;
+}
+
+.control-group[data-group="filter-env"]::before {
+    background: #d97d21;
+}
+
+.control-group[data-group="vca-env"]::before {
+    background: #6f7f3d;
+}
+
+.control-group[data-group="more"]::before {
+    background: #5d5952;
+}
+
+.control-group-title {
+    margin: 0;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    text-align: center;
+}
+
+.control-group-grid {
     display: flex;
     align-items: flex-end;
     justify-content: center;
-    gap: 1.25rem;
-    flex-wrap: wrap;
-    width: 100%;
+    gap: 0.45rem;
+    min-height: 11rem;
 }
 
 #rnbo-keyboard {
@@ -48,11 +154,14 @@ body {
 .keyboard {
     position: relative;
     width: 100%;
-    height: 14rem;
-    border-radius: 1rem;
+    height: 8.5rem;
+    border: 1px solid rgba(58, 46, 28, 0.28);
+    border-radius: 0.55rem;
     overflow: hidden;
     background: linear-gradient(180deg, #f4f1eb 0%, #d8cfbf 100%);
-    box-shadow: inset 0 0.1rem 0 rgba(255, 255, 255, 0.8), inset 0 -0.2rem 0 rgba(0, 0, 0, 0.08);
+    box-shadow:
+        inset 0 0.1rem 0 rgba(255, 255, 255, 0.8),
+        inset 0 -0.2rem 0 rgba(0, 0, 0, 0.08);
 }
 
 .piano-key {
@@ -96,22 +205,25 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.85rem;
-    min-width: 5.5rem;
+    gap: 0.45rem;
+    min-width: 3rem;
 }
 
 .control-label {
-    font-size: 0.8rem;
+    font-size: 0.65rem;
     font-weight: 700;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.04em;
     text-transform: uppercase;
     text-align: center;
+    line-height: 1.1;
+    min-height: 1.45rem;
 }
 
 .control-readout {
-    font-size: 0.95rem;
+    font-size: 0.72rem;
     font-variant-numeric: tabular-nums;
-    min-height: 1.2rem;
+    min-height: 0.9rem;
+    text-align: center;
 }
 
 .vertical-slider {
@@ -119,30 +231,41 @@ body {
     appearance: auto;
     writing-mode: vertical-lr;
     direction: rtl;
-    width: 2.5rem;
-    height: 16rem;
+    width: 1.5rem;
+    height: 8.5rem;
     margin: 0;
+    accent-color: #2d2c28;
 }
 
 @media (max-width: 640px) {
     #synth-panel {
-        min-height: 24rem;
-        padding: 1.5rem;
+        min-height: 20rem;
+        padding: 1rem;
     }
 
     #rnbo-parameter-sliders {
-        gap: 1rem;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.6rem;
+    }
+
+    #preset-select {
+        min-width: 7.5rem;
     }
 
     .control-strip {
-        min-width: 5.5rem;
+        min-width: 3.2rem;
+    }
+
+    .control-group-grid {
+        min-height: 9rem;
     }
 
     .vertical-slider {
-        height: 12rem;
+        width: 1.25rem;
+        height: 6.5rem;
     }
 
     .keyboard {
-        height: 10rem;
+        height: 6rem;
     }
 }

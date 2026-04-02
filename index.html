@@ -13,6 +13,12 @@
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="rnbo-root">
         <main id="synth-panel" aria-label="RNBO filter controls">
+            <div id="panel-toolbar">
+                <div id="preset-panel" hidden>
+                    <label id="preset-label" for="preset-select">Preset</label>
+                    <select id="preset-select" aria-label="RNBO preset selector"></select>
+                </div>
+            </div>
             <div id="rnbo-parameter-sliders" aria-live="polite"></div>
             <div id="rnbo-keyboard" aria-label="Five octave keyboard"></div>
         </main>
