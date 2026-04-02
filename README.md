@@ -4,6 +4,32 @@ This example shows you how to add dynamic audio to a webpage, using the web expo
 
 This repository uses [Node](https://nodejs.org/en/) to launch a simple web server to make your webpage available locally. For more on why this is necessary, see [Why a local server?](#why-a-local-server)
 
+## Recommended workflow for iterative RNBO exports
+
+Yes: this repo can support the workflow you want, where your RNBO export is replaceable and your web UI keeps evolving independently.
+
+Treat the project as two layers:
+
+- `export/` is disposable RNBO output
+- `js/`, `style/`, and `index.html` are your hand-authored web app
+
+This repository is now set up so that:
+
+- `js/app.js` loads the current export using `export/export-manifest.json` when available
+- `js/custom-ui.js` is reserved for your custom interface code
+- a `rnbo-ready` browser event fires when the RNBO device is ready
+- `window.rnboApp` is exposed for debugging in the browser console
+
+That means your loop can be:
+
+1. Edit the RNBO patch in Max.
+2. Export it again into `export/`.
+3. Run `npm run sync-export` if the export filename changed or if you want to refresh the manifest.
+4. Keep building your interface in `js/custom-ui.js`, `index.html`, and `style/style.css`.
+5. Refresh the page and test again.
+
+The local dev server now uses `http-server -c-1`, which disables caching and makes repeated re-exports much easier to verify.
+
 ## Prerequisites
 
 In order to run this example, you'll need `node`, `npm`, and access to the command line. The `npx` binary ships with `node`, so just download and install that from the [Node.js downloads site](https://nodejs.org/en/download/). The recommended version is their latest `LTS`, which at the time of writing this document is version 16.
@@ -53,10 +79,9 @@ export/
 Whenever you make a change to your RNBO patch, remember to export the source code again to update this file. Now that you've exported your RNBO code, we're ready to open the webpage. From the repository root, run the following command to start the local web server
 
 ```sh
-npx http-server
+npm run dev
 ```
 
-When asked to install the `http-server` in order to proceed simply agree by using `y`. You will only have to agree on that once.
 Once the server started up successfully you may see something like the following in the console:
 
 ```sh
@@ -69,13 +94,54 @@ Open the shown URL, fe. `http://127.0.0.1:8080` in your default browser, if ever
 
 ### Exporting a new patch
 
-This example looks in the `export` directory for a patch named `patch.export.json`. If you change the name of your export to something other than `patch.export.json`, you'll need to change the JavaScript as well. In `js/app.js`, the line:
+By default this project now generates `export/export-manifest.json` and uses that file to find the right RNBO export. If RNBO writes a different file name such as `MyPatch.export.json`, run:
 
-```js
-const patchExportURL = "export/patch.export.json";
+```sh
+npm run sync-export
 ```
 
-can be changed to reflect the name of your export.
+If you prefer to hard-code the export filename instead, update the configuration in `js/app.js`. Change:
+
+```js
+patchExportURL: "export/patch.export.json"
+```
+
+to reflect the name of your export.
+
+## Custom UI development
+
+You do not need to keep editing the RNBO bootstrapping logic every time you want a different interface.
+
+Use these files like this:
+
+- `js/app.js`: loads the export, creates the RNBO device, and emits the `rnbo-ready` event
+- `js/custom-ui.js`: your custom controls and page behavior
+- `index.html`: your page structure
+- `style/style.css`: your styles
+
+In `js/custom-ui.js`, listen for the device becoming ready:
+
+```js
+window.addEventListener("rnbo-ready", (event) => {
+    const { device, patcher } = event.detail;
+    console.log("RNBO ready", patcher.desc.meta.filename);
+});
+```
+
+From there you can:
+
+- read parameters from `device.parameters`
+- set parameter values with `param.value = ...`
+- subscribe to parameter changes with `device.parameterChangeEvent.subscribe(...)`
+- send messages or MIDI events to the patch
+
+If you want to replace the stock template UI entirely, set this in `js/app.js`:
+
+```js
+useTemplateUI: false
+```
+
+That keeps the RNBO loading behavior while disabling the example controls.
 
 ## Troubleshooting
 
@@ -96,7 +162,7 @@ Again check the developer console, this time looking for error messages about a 
 If you changed your exported patch in the `export` folder but your patch isn't changing in the browser, you might need to hard refresh the page (cmd+shift+R). This clears the cache to account for any changes to the page being served.
 
 ## Why a local server?
-We're recreating on a very small scale what happens whenever you load a website on your computer. When you run `npx http-server`, a Node process starts. This process binds to a port on your machine, defaulting to port 8080. When your browser tries to access the website `http://localhost:8080`, it connects to the server and tries to get the content for the given path, which is `/`. Given this path, the server returns the contents of the file `index.html`, which is what you see when you load the page.
+We're recreating on a very small scale what happens whenever you load a website on your computer. When you run `npm run dev`, a Node process starts an `http-server` instance. This process binds to a port on your machine, defaulting to port 8080. When your browser tries to access the website `http://localhost:8080`, it connects to the server and tries to get the content for the given path, which is `/`. Given this path, the server returns the contents of the file `index.html`, which is what you see when you load the page.
 
 As part of loading that page, your web browser also asks the server for the JavaScript file at `js/app.js`. When the browser executes this script, it makes yet another request to fetch the file at the path `export/patch.export.json`. Finally, the script can use this exported patch to create a RNBO JavaScript object and connect it to the audio graph in the current page.
 

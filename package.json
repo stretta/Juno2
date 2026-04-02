@@ -1,0 +1,9 @@
+{
+  "name": "juno2-rnbo-web-template",
+  "private": true,
+  "scripts": {
+    "sync-export": "node scripts/sync-rnbo-export.mjs",
+    "dev": "npm run sync-export && npx http-server -c-1 .",
+    "serve": "npm run sync-export && npx http-server -c-1 ."
+  }
+}
