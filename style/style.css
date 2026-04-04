@@ -13,8 +13,8 @@ body {
 #rnbo-root {
     min-height: 100vh;
     display: grid;
-    place-items: center;
-    padding: 1rem;
+    place-items: start;
+    padding: 0;
     box-sizing: border-box;
 }
 
