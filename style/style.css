@@ -44,9 +44,7 @@ html, body {
 
 body {
     font-family: var(--font-primary);
-    background:
-        radial-gradient(circle at top left, rgba(238, 36, 60, 0.08), transparent 28%),
-        linear-gradient(180deg, #f8fafb 0%, var(--color-bg) 100%);
+    background: transparent;
     color: var(--color-text);
 }
 
