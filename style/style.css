@@ -19,7 +19,7 @@
     --font-display: "Lust Script", cursive;
 
     /* APP TOKENS */
-    --color-bg: var(--gray-bg);
+    --color-bg: #ffffff;
     --color-surface: #ffffff;
     --color-surface-alt: #e5ecef;
     --color-panel: #dde6ea;
